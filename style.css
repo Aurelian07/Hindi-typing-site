@@ -1,0 +1,234 @@
+/* ---- Reset-ish basics ---- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  background: #1e1e1e;
+  color: #eee;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+}
+
+.app-header {
+  margin-bottom: 2rem;
+}
+
+/* ---- Typing area: this is a flex COLUMN, prompt on top, input below ---- */
+.typing-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 3rem;
+  width: 100%;
+  max-width: 600px;
+}
+
+.prompt-display {
+  font-size: 3rem;
+  letter-spacing: 0.1em;
+}
+
+.prompt-display span {
+  color: #999;
+}
+
+.prompt-display span.correct {
+  color: #79c98a;
+}
+
+.prompt-display span.incorrect {
+  color: #ed7777;
+}
+
+.prompt-display span.pending {
+  color: #999;
+}
+
+.prompt-display span.current-character {
+  border-bottom: 3px solid #f0c674;
+}
+
+.prompt-display span.prompt-entering {
+  animation: prompt-arrival 420ms ease-out both;
+}
+
+@keyframes prompt-arrival {
+  0%,
+  48% {
+    opacity: 0.45;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.user-input-display {
+  font-size: 3rem;
+  min-height: 4rem;
+  border-bottom: 2px solid #555;
+  width: 100%;
+  text-align: center;
+}
+
+#completionMessage {
+  min-height: 1.5rem;
+  color: #79c98a;
+  font-weight: bold;
+}
+
+/* ---- Keyboard: a COLUMN of rows, each row a flex ROW of keys ---- */
+.keyboard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  max-width: 1100px;
+  box-sizing: border-box;
+  padding: 6px 8px 12px;
+}
+
+.key-row {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: clamp(2px, 0.75vw, 8px);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.key-row:nth-child(2) {
+  width: 98%;
+  margin-left: 2%;
+}
+
+.key-row:nth-child(3) {
+  width: 96%;
+  margin-left: 4%;
+}
+
+.key-row:nth-child(4) {
+  width: 94%;
+  margin-left: 6%;
+}
+
+.key {
+  position: relative;
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  height: clamp(44px, 6vw, 70px);
+  padding: clamp(3px, 1vw, 8px);
+  box-sizing: border-box;
+  background: #292d32;
+  border: 1px solid #444b53;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.14s ease, border-color 0.14s ease, transform 0.14s ease;
+}
+
+.key-qwerty-label,
+.key-phonetic {
+  position: absolute;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.key-qwerty-label {
+  top: clamp(3px, 0.5vw, 7px);
+  left: clamp(3px, 0.5vw, 7px);
+  color: #939ba4;
+  font-size: clamp(0.45rem, 1.1vw, 0.62rem);
+  font-weight: 500;
+}
+
+.key-character {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  transform: translate(-50%, -50%);
+  max-width: calc(100% - 8px);
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: 1;
+  font-size: clamp(0.6rem, 2.5vw, 1.45rem);
+}
+
+.key-phonetic {
+  bottom: clamp(4px, 0.65vw, 9px);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 8px);
+  overflow: hidden;
+  color: #9da5ae;
+  font-size: clamp(0.45rem, 1.2vw, 0.62rem);
+  text-overflow: ellipsis;
+}
+
+.key[hidden],
+.key-character[hidden],
+.key-phonetic[hidden] {
+  display: none;
+}
+
+.key-unmapped {
+  opacity: 0.38;
+  border-color: #343a40;
+  cursor: not-allowed;
+}
+
+.key:hover:not(.key-unmapped) {
+  background: #363c43;
+  border-color: #69737e;
+}
+
+.key-unmapped:hover,
+.key-unmapped:active {
+  background: #292d32;
+  border-color: #343a40;
+  transform: none;
+}
+
+.key:active:not(.key-unmapped) {
+  transform: translateY(1px);
+}
+
+.backspace-key {
+  flex: 1.5 1 0;
+  font-size: clamp(0.5rem, 1.2vw, 0.8rem);
+  color: #d0d5db;
+}
+
+@media (max-width: 480px) {
+  .backspace-key {
+    color: transparent;
+  }
+
+  .backspace-key::after {
+    content: "⌫";
+    position: absolute;
+    color: #d0d5db;
+    font-size: clamp(0.6rem, 4vw, 0.9rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prompt-display span.prompt-entering {
+    animation: none;
+  }
+}

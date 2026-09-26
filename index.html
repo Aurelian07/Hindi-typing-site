@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hindi Typing Tutor</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="app-header">
+    <h1>Hindi Typing Tutor</h1>
+  </header>
+
+  <main class="typing-area">
+    <!-- The prompt text the user needs to type -->
+    <div class="prompt-display" id="promptDisplay">
+      नमस्ते
+    </div>
+
+    <div id="wordsCompletedDisplay">Words completed: 0</div>
+
+    <!-- Where the user's typed input will show -->
+    <div class="user-input-display" id="userInputDisplay">
+      &nbsp;
+    </div>
+  </main>
+
+  <section class="keyboard" id="keyboard">
+
+    <!-- Vowels (स्वर) -->
+    <div class="key-row">
+      <div class="key">अ</div><div class="key">आ</div><div class="key">इ</div><div class="key">ई</div>
+      <div class="key">उ</div><div class="key">ऊ</div><div class="key">ऋ</div><div class="key">ए</div>
+      <div class="key">ऐ</div><div class="key">ओ</div><div class="key">औ</div><div class="key">अं</div><div class="key">अः</div>
+    </div>
+
+    <!-- Consonants (व्यंजन), grouped in their traditional rows -->
+    <div class="key-row">
+      <div class="key">क</div><div class="key">ख</div><div class="key">ग</div><div class="key">घ</div><div class="key">ङ</div>
+    </div>
+    <div class="key-row">
+      <div class="key">च</div><div class="key">छ</div><div class="key">ज</div><div class="key">झ</div><div class="key">ञ</div>
+    </div>
+    <div class="key-row">
+      <div class="key">ट</div><div class="key">ठ</div><div class="key">ड</div><div class="key">ढ</div><div class="key">ण</div>
+    </div>
+    <div class="key-row">
+      <div class="key">त</div><div class="key">थ</div><div class="key">द</div><div class="key">ध</div><div class="key">न</div>
+    </div>
+    <div class="key-row">
+      <div class="key">प</div><div class="key">फ</div><div class="key">ब</div><div class="key">भ</div><div class="key">म</div>
+    </div>
+    <div class="key-row">
+      <div class="key">य</div><div class="key">र</div><div class="key">ल</div><div class="key">व</div>
+      <div class="key">श</div><div class="key">ष</div><div class="key">स</div><div class="key">ह</div>
+    </div>
+    <div class="key-row">
+      <div class="key">क्ष</div><div class="key">त्र</div><div class="key">ज्ञ</div>
+    </div>
+
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
