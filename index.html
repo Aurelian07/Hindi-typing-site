@@ -3,64 +3,112 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1e1e1e" />
   <title>Hindi Typing Tutor</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="home-page">
+  <div class="home-shell">
+    <header class="home-header">
+      <a class="home-brand" href="index.html" aria-label="Hindi Typing Tutor home">
+        <span class="home-brand__mark" aria-hidden="true">हि</span>
+        <span>Hindi Typing Tutor</span>
+      </a>
+      <span class="home-header__track">GUIDED PRACTICE</span>
+    </header>
 
-  <header class="app-header">
-    <h1>Hindi Typing Tutor</h1>
-  </header>
+    <main class="home-main">
+      <section class="home-intro" aria-labelledby="home-title">
+        <p class="home-eyebrow">TYPE IN DEVANAGARI</p>
+        <h1 class="home-title" id="home-title">Hindi typing,<br /><span>one key at a time.</span></h1>
+        <p class="home-description">Build Hindi typing confidence with a guided keyboard practice tutor.</p>
+        <a class="home-cta" id="homeCta" href="lessons.html">
+          <span id="homeCtaLabel">Start Typing</span>
+          <span class="home-cta__arrow" aria-hidden="true">&#8594;</span>
+        </a>
+      </section>
 
-  <main class="typing-area">
-    <!-- The prompt text the user needs to type -->
-    <div class="prompt-display" id="promptDisplay">
-      नमस्ते
-    </div>
+      <section class="home-roadmap-section" aria-labelledby="roadmap-title">
+        <div class="home-roadmap-heading">
+          <div>
+            <p class="home-eyebrow">YOUR LEARNING PATH</p>
+            <h2 id="roadmap-title">Practice tracks</h2>
+          </div>
+          <span class="home-roadmap-count">01 / 04</span>
+        </div>
 
-    <div id="wordsCompletedDisplay">Words completed: 0</div>
+        <ol class="home-roadmap">
+          <li class="home-track home-track--active">
+            <a class="home-track__link" href="lessons.html">
+              <span class="home-track__number">01</span>
+              <span class="home-track__copy">
+                <span class="home-track__title">Home Row</span>
+                <span class="home-track__detail">11 keys · 8 guided stages</span>
+              </span>
+              <span class="home-track__badge" id="homeRowBadge">Start here</span>
+            </a>
+          </li>
+          <li class="home-track home-track--disabled" aria-disabled="true">
+            <span class="home-track__number">02</span>
+            <span class="home-track__copy">
+              <span class="home-track__title">Top Row</span>
+              <span class="home-track__detail">Next key group</span>
+            </span>
+            <span class="home-track__badge">Coming soon</span>
+          </li>
+          <li class="home-track home-track--disabled" aria-disabled="true">
+            <span class="home-track__number">03</span>
+            <span class="home-track__copy">
+              <span class="home-track__title">Bottom Row</span>
+              <span class="home-track__detail">Complete the keyboard</span>
+            </span>
+            <span class="home-track__badge">Coming soon</span>
+          </li>
+          <li class="home-track home-track--disabled" aria-disabled="true">
+            <span class="home-track__number">04</span>
+            <span class="home-track__copy">
+              <span class="home-track__title">Sentences &amp; Words</span>
+              <span class="home-track__detail">Build fluency with real text</span>
+            </span>
+            <span class="home-track__badge">Coming soon</span>
+          </li>
+        </ol>
+      </section>
+    </main>
 
-    <!-- Where the user's typed input will show -->
-    <div class="user-input-display" id="userInputDisplay">
-      &nbsp;
-    </div>
-  </main>
+    <footer class="home-footer">
+      <span>हिन्दी अभ्यास</span>
+      <span>Start with the home row</span>
+    </footer>
+  </div>
 
-  <section class="keyboard" id="keyboard">
+  <script>
+    (() => {
+      const homeCtaLabel = document.getElementById("homeCtaLabel");
+      const homeRowBadge = document.getElementById("homeRowBadge");
+      let progress = null;
 
-    <!-- Vowels (स्वर) -->
-    <div class="key-row">
-      <div class="key">अ</div><div class="key">आ</div><div class="key">इ</div><div class="key">ई</div>
-      <div class="key">उ</div><div class="key">ऊ</div><div class="key">ऋ</div><div class="key">ए</div>
-      <div class="key">ऐ</div><div class="key">ओ</div><div class="key">औ</div><div class="key">अं</div><div class="key">अः</div>
-    </div>
+      try {
+        const savedProgress = localStorage.getItem("hindiTutorProgress");
+        if (savedProgress) {
+          const parsedProgress = JSON.parse(savedProgress);
+          if (parsedProgress && typeof parsedProgress === "object") {
+            progress = parsedProgress;
+          }
+        }
+      } catch {
+        progress = null;
+      }
 
-    <!-- Consonants (व्यंजन), grouped in their traditional rows -->
-    <div class="key-row">
-      <div class="key">क</div><div class="key">ख</div><div class="key">ग</div><div class="key">घ</div><div class="key">ङ</div>
-    </div>
-    <div class="key-row">
-      <div class="key">च</div><div class="key">छ</div><div class="key">ज</div><div class="key">झ</div><div class="key">ञ</div>
-    </div>
-    <div class="key-row">
-      <div class="key">ट</div><div class="key">ठ</div><div class="key">ड</div><div class="key">ढ</div><div class="key">ण</div>
-    </div>
-    <div class="key-row">
-      <div class="key">त</div><div class="key">थ</div><div class="key">द</div><div class="key">ध</div><div class="key">न</div>
-    </div>
-    <div class="key-row">
-      <div class="key">प</div><div class="key">फ</div><div class="key">ब</div><div class="key">भ</div><div class="key">म</div>
-    </div>
-    <div class="key-row">
-      <div class="key">य</div><div class="key">र</div><div class="key">ल</div><div class="key">व</div>
-      <div class="key">श</div><div class="key">ष</div><div class="key">स</div><div class="key">ह</div>
-    </div>
-    <div class="key-row">
-      <div class="key">क्ष</div><div class="key">त्र</div><div class="key">ज्ञ</div>
-    </div>
-
-  </section>
-
-  <script src="script.js"></script>
+      if (progress && progress.isHomeRowMastered === true) {
+        homeCtaLabel.textContent = "Home Row Mastered — Practice Again";
+        homeRowBadge.textContent = "✓ Completed";
+        homeRowBadge.classList.add("home-track__badge--complete");
+      } else if (progress && Number.isInteger(progress.currentStageIndex) && progress.currentStageIndex >= 0) {
+        homeCtaLabel.textContent = `Continue — Stage ${progress.currentStageIndex + 1}`;
+        homeRowBadge.textContent = "In progress";
+      }
+    })();
+  </script>
 </body>
 </html>

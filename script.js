@@ -1,5 +1,7 @@
 console.log("Hindi Typing Tutor loaded.");
 
+const SHOW_PHONETIC_LABELS = false;
+
 const INSCRIPT_LAYOUT = {
   Backquote: { unshifted: "ॊ", shifted: "ऒ" },
   Digit1: { unshifted: "1", shifted: "ऍ" },
@@ -107,47 +109,190 @@ const KEYBOARD_ROWS = [
   ["KeyZ", "KeyX", "KeyC", "KeyV", "KeyB", "KeyN", "KeyM", "Comma", "Period", "Slash"]
 ];
 
-const wordBank = [
-  "घर",
-  "आम",
-  "पानी",
-  "फूल",
-  "बच्चा",
-  "किताब",
-  "स्कूल",
-  "सूरज",
-  "दोस्त",
-  "परिवार",
-  "सुबह",
-  "खिड़की",
-  "त्योहार",
-  "कहानी",
-  "स्वास्थ्य",
-  "जिम्मेदारी"
+const LEFT_HAND_CODES = [
+  "Backquote", "Digit1", "Digit2", "Digit3", "Digit4", "Digit5",
+  "KeyQ", "KeyW", "KeyE", "KeyR", "KeyT",
+  "KeyA", "KeyS", "KeyD", "KeyF", "KeyG",
+  "KeyZ", "KeyX", "KeyC", "KeyV", "KeyB"
 ];
+
+const LESSON_STAGES = [
+  {
+    id: 1,
+    newKeys: ["KeyF", "KeyJ"],
+    words: ["रि", "र"]
+  },
+  {
+    id: 2,
+    newKeys: ["KeyD", "KeyK"],
+    words: ["कर", "रक", "कि", "क्र"]
+  },
+  {
+    id: 3,
+    newKeys: ["KeyS", "KeyL"],
+    words: ["तक", "कर", "ते", "तर"]
+  },
+  {
+    id: 4,
+    newKeys: ["KeyA", "Semicolon"],
+    words: ["चोर", "कोर", "कर", "तक"]
+  },
+  {
+    id: 5,
+    newKeys: ["KeyG", "KeyH"],
+    words: ["पर", "पत्र", "पर", "तर"]
+  },
+  {
+    id: 6,
+    newKeys: ["Quote"],
+    words: ["चोट", "तट", "पेट"]
+  },
+  {
+    id: 7,
+    newKeys: [],
+    words: ["कर", "तक", "पर", "चोर", "चोट", "तट", "पेट", "पत्र", "रोक", "कोर"]
+  },
+  {
+    id: 8,
+    newKeys: [],
+    words: ["कर", "तक", "पर", "चोर", "चोट", "तट", "पेट", "पत्र", "रोक", "कोर"],
+    isMasteryCheck: true
+  },
+  {
+    id: 9,
+    newKeys: ["KeyR", "KeyU"],
+    words: ["तीर", "कीट", "हल", "हर", "ही"]
+  },
+  {
+    id: 10,
+    newKeys: ["KeyE", "KeyI"],
+    words: ["कान", "पान", "हार", "गाना"]
+  },
+  {
+    id: 11,
+    newKeys: ["KeyW", "KeyO"],
+    words: ["दही", "दान", "दर", "पैर", "कैसा"]
+  },
+  {
+    id: 12,
+    newKeys: ["KeyQ", "KeyP"],
+    words: ["जाता", "राज", "सौ", "कौन"]
+  },
+  {
+    id: 13,
+    newKeys: ["KeyT", "KeyY"],
+    words: ["बात", "बहू", "सूत", "रोटी"]
+  },
+  {
+    id: 14,
+    newKeys: ["BracketLeft", "BracketRight", "Backslash"],
+    words: ["बड़ा", "पेड़", "लड़का", "डॉक्टर"]
+  },
+  {
+    id: 15,
+    newKeys: [],
+    words: ["कान", "हार", "दही", "कैसा", "जाता", "कौन", "बात", "रोटी", "बड़ा", "लड़का"]
+  },
+  {
+    id: 16,
+    newKeys: [],
+    words: ["कान", "हार", "दही", "कैसा", "जाता", "कौन", "बात", "रोटी", "बड़ा", "लड़का"],
+    isMasteryCheck: true
+  }
+];
+// Future pages can read localStorage["hindiTutorProgress"] as JSON:
+// { currentStageIndex: number (zero-based), wordsCompletedInStage: number,
+//   wordsCompleted: number, isHomeRowMastered: boolean, isTopRowMastered: boolean }.
+const PROGRESS_STORAGE_KEY = "hindiTutorProgress";
+
+function loadProgress() {
+  try {
+    const serializedProgress = localStorage.getItem(PROGRESS_STORAGE_KEY);
+    if (!serializedProgress) {
+      return null;
+    }
+
+    const progress = JSON.parse(serializedProgress);
+    if (
+      !progress ||
+      !Number.isInteger(progress.currentStageIndex) ||
+      progress.currentStageIndex < 0 ||
+      progress.currentStageIndex >= LESSON_STAGES.length ||
+      !Number.isInteger(progress.wordsCompletedInStage) ||
+      progress.wordsCompletedInStage < 0 ||
+      !Number.isInteger(progress.wordsCompleted) ||
+      progress.wordsCompleted < 0 ||
+      typeof progress.isHomeRowMastered !== "boolean" ||
+      (progress.isTopRowMastered !== undefined && typeof progress.isTopRowMastered !== "boolean")
+    ) {
+      return null;
+    }
+
+    return { ...progress, isTopRowMastered: progress.isTopRowMastered === true };
+  } catch {
+    return null;
+  }
+}
+
+function saveProgress() {
+  try {
+    localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify({
+      currentStageIndex,
+      wordsCompletedInStage,
+      wordsCompleted: completedWords,
+      isHomeRowMastered,
+      isTopRowMastered
+    }));
+  } catch {
+    // Progress persistence is optional when storage is unavailable.
+  }
+}
+
+let currentStageIndex = 0;
+let wordsCompletedInStage = 0;
+let isHomeRowMastered = false;
+let isTopRowMastered = false;
+let masteryCorrectChars = 0;
+let masteryTotalAttempts = 0;
+let topRowMasteryCorrectChars = 0;
+let topRowMasteryTotalAttempts = 0;
+const WORDS_PER_STAGE = 5;
+const MASTERY_WORDS_TO_COMPLETE = 8;
+let completedWords = 0;
+
+const savedProgress = loadProgress();
+if (savedProgress) {
+  currentStageIndex = savedProgress.currentStageIndex;
+  wordsCompletedInStage = savedProgress.wordsCompletedInStage;
+  completedWords = savedProgress.wordsCompleted;
+  isHomeRowMastered = savedProgress.isHomeRowMastered;
+  isTopRowMastered = savedProgress.isTopRowMastered;
+}
 
 const promptDisplay = document.getElementById("promptDisplay");
 const userInputDisplay = document.getElementById("userInputDisplay");
 const wordsCompletedDisplay = document.getElementById("wordsCompletedDisplay");
+wordsCompletedDisplay.textContent = `Words completed: ${completedWords}`;
 const keyboard = document.getElementById("keyboard");
 const completionMessage = document.createElement("div");
 completionMessage.id = "completionMessage";
 userInputDisplay.insertAdjacentElement("afterend", completionMessage);
 
 const statsDisplay = document.createElement("div");
+const stageDisplay = document.createElement("div");
 const lastCpmDisplay = document.createElement("div");
 const averageCpmDisplay = document.createElement("div");
 const accuracyDisplay = document.createElement("div");
 statsDisplay.id = "statsDisplay";
+updateStageDisplay();
 lastCpmDisplay.textContent = "Last word: 0 CPM";
 averageCpmDisplay.textContent = "Average: 0 CPM";
 accuracyDisplay.textContent = "Accuracy: 100%";
-statsDisplay.append(lastCpmDisplay, averageCpmDisplay, accuracyDisplay);
+statsDisplay.append(stageDisplay, lastCpmDisplay, averageCpmDisplay, accuracyDisplay);
 wordsCompletedDisplay.insertAdjacentElement("afterend", statsDisplay);
 
 let lastPrompt = "";
 let currentPrompt = pickRandomPrompt();
-let completedWords = 0;
 let isTransitioning = false;
 let promptStartTime = null;
 let totalCpm = 0;
@@ -159,13 +304,27 @@ let totalMistakes = 0;
 // of truth).
 let typedText = "";
 
+function updateStageDisplay() {
+  const currentStage = LESSON_STAGES[currentStageIndex];
+  if (currentStage.newKeys.length === 0) {
+    const rowName = currentStage.id >= 15 ? "top" : "home";
+    stageDisplay.textContent = `Stage ${currentStage.id} — Full ${rowName} row practice`;
+    return;
+  }
+
+  const readableKeys = currentStage.newKeys.map((key) => key.replace("Key", ""));
+  const stageProgress = Math.min(wordsCompletedInStage, WORDS_PER_STAGE);
+  stageDisplay.textContent = `Stage ${currentStage.id} (${readableKeys.join(", ")}) — ${stageProgress}/${WORDS_PER_STAGE} words`;
+}
+
 function pickRandomPrompt() {
+  const stageWords = LESSON_STAGES[currentStageIndex].words;
   let selectedPrompt;
 
   do {
-    const randomIndex = Math.floor(Math.random() * wordBank.length);
-    selectedPrompt = wordBank[randomIndex];
-  } while (wordBank.length > 1 && selectedPrompt === lastPrompt);
+    const randomIndex = Math.floor(Math.random() * stageWords.length);
+    selectedPrompt = stageWords[randomIndex];
+  } while (stageWords.length > 1 && selectedPrompt === lastPrompt);
 
   lastPrompt = selectedPrompt;
   return selectedPrompt;
@@ -183,6 +342,43 @@ function renderPrompt() {
     }
     promptDisplay.appendChild(characterSpan);
   });
+}
+
+function findKeyForCharacter(character) {
+  for (const [code, mapping] of Object.entries(INSCRIPT_LAYOUT)) {
+    if (mapping.unshifted === character) {
+      return { code, needsShift: false };
+    }
+    if (mapping.shifted === character) {
+      return { code, needsShift: true };
+    }
+  }
+
+  return null;
+}
+
+function updateNextKeyHint(character) {
+  keyboard.querySelectorAll(".next-key-hint").forEach((keyElement) => {
+    keyElement.classList.remove("next-key-hint");
+  });
+
+  const keyMapping = findKeyForCharacter(character);
+  if (!keyMapping) {
+    return;
+  }
+
+  const keyElement = keyboard.querySelector(`.inscript-key[data-code="${keyMapping.code}"]`);
+  if (!keyElement) {
+    return;
+  }
+
+  keyElement.classList.add("next-key-hint");
+  if (keyMapping.needsShift) {
+    const shiftKeyId = LEFT_HAND_CODES.includes(keyMapping.code)
+      ? "right-shift-key"
+      : "left-shift-key";
+    document.getElementById(shiftKeyId)?.classList.add("next-key-hint");
+  }
 }
 
 function renderTypingState() {
@@ -204,6 +400,8 @@ function renderTypingState() {
     }
   });
 
+  const nextCharacter = promptCharacters[typedText.length]?.textContent || null;
+  updateNextKeyHint(isHomeRowMastered ? null : nextCharacter);
   userInputDisplay.textContent = typedText;
   completionMessage.textContent = "";
 }
@@ -222,6 +420,19 @@ function addCharacter(character) {
     correctChars += 1;
   } else {
     totalMistakes += 1;
+  }
+  const currentStage = LESSON_STAGES[currentStageIndex];
+  if (currentStage.id === 8 && currentStage.isMasteryCheck) {
+    masteryTotalAttempts += 1;
+    if (character === expectedCharacter) {
+      masteryCorrectChars += 1;
+    }
+  }
+  if (currentStage.id === 16 && currentStage.isMasteryCheck && !isTopRowMastered) {
+    topRowMasteryTotalAttempts += 1;
+    if (character === expectedCharacter) {
+      topRowMasteryCorrectChars += 1;
+    }
   }
 
   typedText += character;
@@ -252,20 +463,53 @@ function completeCurrentWord() {
   const currentCpm = Math.round((currentPrompt.length / elapsedSeconds) * 60);
 
   completedWords += 1;
+  wordsCompletedInStage += 1;
   totalCpm += currentCpm;
   wordsCompletedDisplay.textContent = `Words completed: ${completedWords}`;
   lastCpmDisplay.textContent = `Last word: ${currentCpm} CPM`;
   averageCpmDisplay.textContent = `Average: ${Math.round(totalCpm / completedWords)} CPM`;
-  completionMessage.textContent = "Completed!";
+
+  const currentStage = LESSON_STAGES[currentStageIndex];
+  let masteryCompletionMessage = "";
+  let homeRowMasteryCompleted = false;
+  if (currentStage.id === 8 && currentStage.isMasteryCheck && wordsCompletedInStage >= MASTERY_WORDS_TO_COMPLETE) {
+    const masteryAccuracy = Math.round((masteryCorrectChars / masteryTotalAttempts) * 100);
+    masteryCompletionMessage = `Home row complete! Accuracy: ${masteryAccuracy}%`;
+    isHomeRowMastered = true;
+    homeRowMasteryCompleted = true;
+  }
+
+  if (currentStage.id === 16 && currentStage.isMasteryCheck && !isTopRowMastered && wordsCompletedInStage >= MASTERY_WORDS_TO_COMPLETE) {
+    const masteryAccuracy = Math.round((topRowMasteryCorrectChars / topRowMasteryTotalAttempts) * 100);
+    masteryCompletionMessage = `Top row complete! Accuracy: ${masteryAccuracy}%`;
+    isTopRowMastered = true;
+  }
+
+  const hasNextStage = currentStageIndex < LESSON_STAGES.length - 1;
+  const stageAdvanced = homeRowMasteryCompleted || (
+    !currentStage.isMasteryCheck && wordsCompletedInStage >= WORDS_PER_STAGE && hasNextStage
+  );
+  if (stageAdvanced) {
+    currentStageIndex += 1;
+    wordsCompletedInStage = 0;
+    currentPrompt = pickRandomPrompt();
+  }
+  saveProgress();
+  updateStageDisplay();
+  completionMessage.textContent = masteryCompletionMessage || (stageAdvanced
+    ? `Stage complete! Moving to Stage ${LESSON_STAGES[currentStageIndex].id}`
+    : "Completed!");
 
   setTimeout(() => {
     typedText = "";
     promptStartTime = null;
-    currentPrompt = pickRandomPrompt();
+    if (!stageAdvanced) {
+      currentPrompt = pickRandomPrompt();
+    }
     renderPrompt();
     renderTypingState();
     isTransitioning = false;
-  }, 800);
+  }, stageAdvanced ? 1500 : 800);
 }
 
 function updateAccuracyDisplay() {
@@ -315,6 +559,14 @@ function appendKeyLabel(keyElement, className, text) {
   return label;
 }
 
+function appendDecorativeKey(row, className, label, id) {
+  const keyElement = document.createElement("div");
+  keyElement.className = `key ${className}`;
+  keyElement.textContent = label;
+  keyElement.id = id;
+  row.appendChild(keyElement);
+}
+
 function formatKeyCharacter(character) {
   const dependentSigns = new Set([
     "े", "ो", "ी", "ु", "ू", "ि", "ा", "ै", "ौ", "ृ", "ं", "ः", "ँ", "़", "्"
@@ -333,6 +585,10 @@ function renderKeyboard() {
     row.className = "key-row";
 
     rowCodes.forEach((code) => {
+      if (code === "KeyZ") {
+        appendDecorativeKey(row, "key-shift", "Shift", "left-shift-key");
+      }
+
       const characters = INSCRIPT_LAYOUT[code];
       const phonetics = PHONETIC_NAMES[code];
       const keyElement = document.createElement("div");
@@ -352,7 +608,7 @@ function renderKeyboard() {
         characterLabel.dataset.characterShifted = shiftedCharacter || "";
       }
 
-      if (phonetics.unshifted !== null || phonetics.shifted !== null) {
+      if (SHOW_PHONETIC_LABELS && (phonetics.unshifted !== null || phonetics.shifted !== null)) {
         const phoneticLabel = appendKeyLabel(
           keyElement,
           "key-phonetic",
@@ -369,10 +625,33 @@ function renderKeyboard() {
       }
 
       row.appendChild(keyElement);
+
+      if (code === "Quote") {
+        appendDecorativeKey(row, "key-enter", "Enter", "enter-key");
+      } else if (code === "Slash") {
+        appendDecorativeKey(row, "key-shift", "Shift", "right-shift-key");
+      }
     });
 
     keyboard.appendChild(row);
   });
+
+  const modifierRow = document.createElement("div");
+  modifierRow.className = "key-row key-spacebar-row";
+  modifierRow.setAttribute("aria-hidden", "true");
+
+  ["Ctrl", "Win", "Alt", "spacebar", "Alt", "Win", "Menu", "Ctrl"].forEach((label) => {
+    const keyElement = document.createElement("div");
+    if (label === "spacebar") {
+      keyElement.className = "key-spacebar";
+    } else {
+      keyElement.className = "key-modifier";
+      keyElement.textContent = label;
+    }
+    modifierRow.appendChild(keyElement);
+  });
+
+  keyboard.appendChild(modifierRow);
 }
 
 function setKeyboardShiftState(isShiftActive) {
@@ -459,3 +738,6 @@ createBackspaceKey();
 setKeyboardShiftState(false);
 addKeyListeners();
 renderTypingState();
+if (isHomeRowMastered) {
+  completionMessage.textContent = "Home row complete!";
+}
