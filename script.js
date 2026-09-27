@@ -345,6 +345,10 @@ function renderPrompt() {
 }
 
 function findKeyForCharacter(character) {
+  if (character === null || character === undefined || character === "") {
+    return null;
+  }
+
   for (const [code, mapping] of Object.entries(INSCRIPT_LAYOUT)) {
     if (mapping.unshifted === character) {
       return { code, needsShift: false };
@@ -401,7 +405,7 @@ function renderTypingState() {
   });
 
   const nextCharacter = promptCharacters[typedText.length]?.textContent || null;
-  updateNextKeyHint(isHomeRowMastered ? null : nextCharacter);
+  updateNextKeyHint(nextCharacter);
   userInputDisplay.textContent = typedText;
   completionMessage.textContent = "";
 }
