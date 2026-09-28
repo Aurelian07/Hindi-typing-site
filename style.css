@@ -84,6 +84,14 @@ body {
   color: #79c98a;
   font-weight: bold;
 }
+.top-row-mastery-badge {
+  border: 1px solid rgba(121, 201, 138, 0.45);
+  border-radius: 4px;
+  padding: 5px 9px;
+  color: #79c98a;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
 
 /* ---- Keyboard: a COLUMN of rows, each row a flex ROW of keys ---- */
 .keyboard {

@@ -56,13 +56,13 @@
             </span>
             <span class="home-track__badge" id="topRowBadge">Coming soon</span>
           </li>
-          <li class="home-track home-track--disabled" aria-disabled="true">
+          <li class="home-track home-track--disabled" id="bottomRowTrack" aria-disabled="true">
             <span class="home-track__number">03</span>
             <span class="home-track__copy">
               <span class="home-track__title">Bottom Row</span>
               <span class="home-track__detail">Complete the keyboard</span>
             </span>
-            <span class="home-track__badge">Coming soon</span>
+            <span class="home-track__badge" id="bottomRowBadge">Coming soon</span>
           </li>
           <li class="home-track home-track--disabled" aria-disabled="true">
             <span class="home-track__number">04</span>
@@ -86,10 +86,13 @@
     (() => {
       const HOME_ROW_STAGE_RANGE = { start: 0, end: 7 };
       const TOP_ROW_STAGE_RANGE = { start: 8, end: 15 };
+      const BOTTOM_ROW_STAGE_RANGE = { start: 16, end: 23 };
       const homeCtaLabel = document.getElementById("homeCtaLabel");
       const homeRowBadge = document.getElementById("homeRowBadge");
       const topRowTrack = document.getElementById("topRowTrack");
       const topRowBadge = document.getElementById("topRowBadge");
+      const bottomRowTrack = document.getElementById("bottomRowTrack");
+      const bottomRowBadge = document.getElementById("bottomRowBadge");
       let progress = null;
 
       try {
@@ -107,15 +110,52 @@
       const currentStageIndex = progress?.currentStageIndex;
       const hasValidStageIndex = Number.isInteger(currentStageIndex)
         && currentStageIndex >= HOME_ROW_STAGE_RANGE.start
-        && currentStageIndex <= TOP_ROW_STAGE_RANGE.end;
+        && currentStageIndex <= BOTTOM_ROW_STAGE_RANGE.end;
       const isHomeRowStage = hasValidStageIndex
         && currentStageIndex <= HOME_ROW_STAGE_RANGE.end;
       const isTopRowStage = hasValidStageIndex
-        && currentStageIndex >= TOP_ROW_STAGE_RANGE.start;
+        && currentStageIndex >= TOP_ROW_STAGE_RANGE.start
+        && currentStageIndex <= TOP_ROW_STAGE_RANGE.end;
+      const isBottomRowStage = hasValidStageIndex
+        && currentStageIndex >= BOTTOM_ROW_STAGE_RANGE.start;
       const isHomeRowMastered = progress?.isHomeRowMastered === true;
       const isTopRowMastered = progress?.isTopRowMastered === true;
+      const isBottomRowMastered = progress?.isBottomRowMastered === true;
+      const isFullKeyboardMastered = isHomeRowMastered && isTopRowMastered && isBottomRowMastered;
+      const isTopRowLocked = !isTopRowMastered && !isTopRowStage;
+      const isBottomRowLocked = !isBottomRowMastered && !isBottomRowStage;
 
-      if (isTopRowMastered) {
+      function resetProgressForTrack(firstStageIndex) {
+        const progressToSave = progress && typeof progress === "object" && !Array.isArray(progress)
+          ? { ...progress }
+          : {};
+        progressToSave.currentStageIndex = firstStageIndex;
+        progressToSave.wordsCompletedInStage = 0;
+        if (!Number.isInteger(progressToSave.wordsCompleted) || progressToSave.wordsCompleted < 0) {
+          progressToSave.wordsCompleted = 0;
+        }
+        progressToSave.isHomeRowMastered = progressToSave.isHomeRowMastered === true;
+        progressToSave.isTopRowMastered = progressToSave.isTopRowMastered === true;
+        progressToSave.isBottomRowMastered = progressToSave.isBottomRowMastered === true;
+        localStorage.setItem("hindiTutorProgress", JSON.stringify(progressToSave));
+      }
+
+      function confirmTrackSkip(event, trackName, previousTrackName, firstStageIndex) {
+        if (!window.confirm(`Skip ahead to ${trackName}? You haven't completed ${previousTrackName} yet.`)) {
+          event.preventDefault();
+          return;
+        }
+
+        resetProgressForTrack(firstStageIndex);
+      }
+
+      if (isFullKeyboardMastered) {
+        homeCtaLabel.textContent = "Full Keyboard Mastered — Practice Again";
+      } else if (isBottomRowMastered) {
+        homeCtaLabel.textContent = "Bottom Row Mastered — Practice Again";
+      } else if (isBottomRowStage) {
+        homeCtaLabel.textContent = `Continue — Bottom Row Stage ${currentStageIndex - BOTTOM_ROW_STAGE_RANGE.start + 1}`;
+      } else if (isTopRowMastered) {
         homeCtaLabel.textContent = "Top Row Mastered — Practice Again";
       } else if (isTopRowStage) {
         homeCtaLabel.textContent = `Continue — Top Row Stage ${currentStageIndex - TOP_ROW_STAGE_RANGE.start + 1}`;
@@ -125,29 +165,61 @@
         homeCtaLabel.textContent = `Continue — Stage ${currentStageIndex + 1}`;
       }
 
-      if (currentStageIndex > HOME_ROW_STAGE_RANGE.end || isHomeRowMastered) {
+      if (isHomeRowMastered) {
         homeRowBadge.textContent = "✓ Completed";
         homeRowBadge.classList.add("home-track__badge--complete");
-      } else if (isHomeRowStage) {
+      } else if (isHomeRowStage && !isHomeRowMastered) {
         homeRowBadge.textContent = "In progress";
       }
 
       if (isTopRowMastered) {
         topRowBadge.textContent = "✓ Completed";
         topRowBadge.classList.add("home-track__badge--complete");
-      } else if (isTopRowStage) {
+      } else if (isTopRowStage && !isTopRowMastered) {
         topRowBadge.textContent = "In progress";
+      } else {
+        topRowBadge.textContent = "🔒 Locked";
       }
 
-      if (isTopRowMastered || isTopRowStage) {
+      if (isTopRowMastered || isTopRowStage || isTopRowLocked) {
         const topRowLink = document.createElement("a");
         topRowLink.className = "home-track__link";
         topRowLink.href = "lessons.html";
+        if (isTopRowLocked) {
+          topRowLink.addEventListener("click", (event) => {
+            confirmTrackSkip(event, "Top Row", "Home Row", TOP_ROW_STAGE_RANGE.start);
+          });
+        }
         Array.from(topRowTrack.children).forEach((child) => topRowLink.appendChild(child));
         topRowTrack.appendChild(topRowLink);
         topRowTrack.classList.remove("home-track--disabled");
         topRowTrack.classList.add("home-track--active");
         topRowTrack.removeAttribute("aria-disabled");
+      }
+
+      if (isBottomRowMastered) {
+        bottomRowBadge.textContent = "✓ Completed";
+        bottomRowBadge.classList.add("home-track__badge--complete");
+      } else if (isBottomRowStage && !isBottomRowMastered) {
+        bottomRowBadge.textContent = "In progress";
+      } else {
+        bottomRowBadge.textContent = "🔒 Locked";
+      }
+
+      if (isBottomRowMastered || isBottomRowStage || isBottomRowLocked) {
+        const bottomRowLink = document.createElement("a");
+        bottomRowLink.className = "home-track__link";
+        bottomRowLink.href = "lessons.html";
+        if (isBottomRowLocked) {
+          bottomRowLink.addEventListener("click", (event) => {
+            confirmTrackSkip(event, "Bottom Row", "Top Row", BOTTOM_ROW_STAGE_RANGE.start);
+          });
+        }
+        Array.from(bottomRowTrack.children).forEach((child) => bottomRowLink.appendChild(child));
+        bottomRowTrack.appendChild(bottomRowLink);
+        bottomRowTrack.classList.remove("home-track--disabled");
+        bottomRowTrack.classList.add("home-track--active");
+        bottomRowTrack.removeAttribute("aria-disabled");
       }
     })();
   </script>

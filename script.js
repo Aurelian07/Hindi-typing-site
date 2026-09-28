@@ -198,11 +198,99 @@ const LESSON_STAGES = [
     newKeys: [],
     words: ["कान", "हार", "दही", "कैसा", "जाता", "कौन", "बात", "रोटी", "बड़ा", "लड़का"],
     isMasteryCheck: true
+  },
+  {
+    id: 17,
+    newKeys: ["KeyX", "KeyC"],
+    words: ["मन", "नम", "कम", "तन", "मत"]
+  },
+  {
+    id: 18,
+    newKeys: ["KeyV", "KeyB"],
+    words: ["वन", "नव", "वह", "बस", "सब"]
+  },
+  {
+    id: 19,
+    newKeys: ["KeyN", "KeyM"],
+    words: ["नल", "मल", "सन", "मन", "लन"]
+  },
+  {
+    id: 20,
+    newKeys: ["Comma", "Period"],
+    words: ["राम, श्याम.", "सच, झूठ.", "यह, वह."]
+  },
+  {
+    id: 21,
+    newKeys: ["Slash"],
+    words: ["यम", "यह", "मय", "नय"]
+  },
+  {
+    id: 22,
+    newKeys: [],
+    words: ["मन", "वन", "नल", "बस", "सब", "यह", "राम", "सच", "मय", "कम"]
+  },
+  {
+    id: 23,
+    newKeys: [],
+    words: ["नम", "वह", "मल", "सन", "यम", "तन", "मत", "नव", "यह", "बस"]
+  },
+  {
+    id: 24,
+    newKeys: [],
+    words: ["मन", "वन", "नल", "बस", "सब", "यह", "राम", "सच", "मय", "कम"],
+    isMasteryCheck: true
+  },
+  {
+    id: 25,
+    newKeys: ["KeyE", "KeyR"],
+    words: ["आम", "ईद", "आग", "कई"]
+  },
+  {
+    id: 26,
+    newKeys: ["KeyT", "KeyQ"],
+    words: ["ऊन", "कौन", "ऊपर", "औरत"]
+  },
+  {
+    id: 27,
+    newKeys: ["KeyW", "KeyY"],
+    words: ["ऐनक", "भारत", "भाई", "भला"]
+  },
+  {
+    id: 28,
+    newKeys: ["KeyI", "KeyO"],
+    words: ["घर", "धन", "बाघ", "धूप"]
+  },
+  {
+    id: 29,
+    newKeys: ["KeyP", "BracketLeft"],
+    words: ["झूठ", "ढाल", "झरना", "ढोल"]
+  },
+  {
+    id: 30,
+    newKeys: ["KeyX", "KeyC"],
+    words: ["कहाँ", "यहाँ", "गण", "बाण"]
+  },
+  {
+    id: 31,
+    newKeys: ["KeyM"],
+    words: ["शहर", "शाम", "विश", "आशा"]
+  },
+  {
+    id: 32,
+    newKeys: [],
+    words: ["आम", "भारत", "धन", "शहर", "कहाँ", "औरत", "भाई", "ऊपर", "झूठ", "बाण"]
+  },
+  {
+    id: 33,
+    newKeys: [],
+    words: ["आम", "भारत", "धन", "शहर", "कहाँ", "औरत", "भाई", "ऊपर", "झूठ", "बाण"],
+    isMasteryCheck: true
   }
 ];
 // Future pages can read localStorage["hindiTutorProgress"] as JSON:
 // { currentStageIndex: number (zero-based), wordsCompletedInStage: number,
-//   wordsCompleted: number, isHomeRowMastered: boolean, isTopRowMastered: boolean }.
+//   wordsCompleted: number, isHomeRowMastered: boolean, isTopRowMastered: boolean,
+//   isBottomRowMastered: boolean, isShiftPracticeMastered: boolean }.
 const PROGRESS_STORAGE_KEY = "hindiTutorProgress";
 
 function loadProgress() {
@@ -223,12 +311,19 @@ function loadProgress() {
       !Number.isInteger(progress.wordsCompleted) ||
       progress.wordsCompleted < 0 ||
       typeof progress.isHomeRowMastered !== "boolean" ||
-      (progress.isTopRowMastered !== undefined && typeof progress.isTopRowMastered !== "boolean")
+      (progress.isTopRowMastered !== undefined && typeof progress.isTopRowMastered !== "boolean") ||
+      (progress.isBottomRowMastered !== undefined && typeof progress.isBottomRowMastered !== "boolean") ||
+      (progress.isShiftPracticeMastered !== undefined && typeof progress.isShiftPracticeMastered !== "boolean")
     ) {
       return null;
     }
 
-    return { ...progress, isTopRowMastered: progress.isTopRowMastered === true };
+    return {
+      ...progress,
+      isTopRowMastered: progress.isTopRowMastered === true,
+      isBottomRowMastered: progress.isBottomRowMastered === true,
+      isShiftPracticeMastered: progress.isShiftPracticeMastered === true
+    };
   } catch {
     return null;
   }
@@ -241,7 +336,9 @@ function saveProgress() {
       wordsCompletedInStage,
       wordsCompleted: completedWords,
       isHomeRowMastered,
-      isTopRowMastered
+      isTopRowMastered,
+      isBottomRowMastered,
+      isShiftPracticeMastered
     }));
   } catch {
     // Progress persistence is optional when storage is unavailable.
@@ -252,10 +349,16 @@ let currentStageIndex = 0;
 let wordsCompletedInStage = 0;
 let isHomeRowMastered = false;
 let isTopRowMastered = false;
+let isBottomRowMastered = false;
+let isShiftPracticeMastered = false;
 let masteryCorrectChars = 0;
 let masteryTotalAttempts = 0;
 let topRowMasteryCorrectChars = 0;
 let topRowMasteryTotalAttempts = 0;
+let bottomRowMasteryCorrectChars = 0;
+let bottomRowMasteryTotalAttempts = 0;
+let shiftPracticeMasteryCorrectChars = 0;
+let shiftPracticeMasteryTotalAttempts = 0;
 const WORDS_PER_STAGE = 5;
 const MASTERY_WORDS_TO_COMPLETE = 8;
 let completedWords = 0;
@@ -267,6 +370,8 @@ if (savedProgress) {
   completedWords = savedProgress.wordsCompleted;
   isHomeRowMastered = savedProgress.isHomeRowMastered;
   isTopRowMastered = savedProgress.isTopRowMastered;
+  isBottomRowMastered = savedProgress.isBottomRowMastered;
+  isShiftPracticeMastered = savedProgress.isShiftPracticeMastered;
 }
 
 const promptDisplay = document.getElementById("promptDisplay");
@@ -280,16 +385,28 @@ userInputDisplay.insertAdjacentElement("afterend", completionMessage);
 
 const statsDisplay = document.createElement("div");
 const stageDisplay = document.createElement("div");
+const topRowMasteryBadge = document.createElement("div");
+const bottomRowMasteryBadge = document.createElement("div");
+const shiftPracticeMasteryBadge = document.createElement("div");
 const lastCpmDisplay = document.createElement("div");
 const averageCpmDisplay = document.createElement("div");
 const accuracyDisplay = document.createElement("div");
 statsDisplay.id = "statsDisplay";
-updateStageDisplay();
+topRowMasteryBadge.id = "topRowMasteryBadge";
+topRowMasteryBadge.className = "top-row-mastery-badge";
+topRowMasteryBadge.textContent = "✓ Top Row Mastered — Free Practice Mode";
+bottomRowMasteryBadge.id = "bottomRowMasteryBadge";
+bottomRowMasteryBadge.className = "top-row-mastery-badge";
+bottomRowMasteryBadge.textContent = "✓ Bottom Row Mastered — Free Practice Mode";
+shiftPracticeMasteryBadge.id = "shiftPracticeMasteryBadge";
+shiftPracticeMasteryBadge.className = "top-row-mastery-badge";
+shiftPracticeMasteryBadge.textContent = "✓ Shift Practice Mastered — Free Practice Mode";
 lastCpmDisplay.textContent = "Last word: 0 CPM";
 averageCpmDisplay.textContent = "Average: 0 CPM";
 accuracyDisplay.textContent = "Accuracy: 100%";
-statsDisplay.append(stageDisplay, lastCpmDisplay, averageCpmDisplay, accuracyDisplay);
+statsDisplay.append(stageDisplay, topRowMasteryBadge, bottomRowMasteryBadge, shiftPracticeMasteryBadge, lastCpmDisplay, averageCpmDisplay, accuracyDisplay);
 wordsCompletedDisplay.insertAdjacentElement("afterend", statsDisplay);
+updateStageDisplay();
 
 let lastPrompt = "";
 let currentPrompt = pickRandomPrompt();
@@ -305,10 +422,15 @@ let totalMistakes = 0;
 let typedText = "";
 
 function updateStageDisplay() {
+  topRowMasteryBadge.hidden = !isTopRowMastered;
+  bottomRowMasteryBadge.hidden = !isBottomRowMastered;
+  shiftPracticeMasteryBadge.hidden = !isShiftPracticeMastered;
   const currentStage = LESSON_STAGES[currentStageIndex];
   if (currentStage.newKeys.length === 0) {
-    const rowName = currentStage.id >= 15 ? "top" : "home";
-    stageDisplay.textContent = `Stage ${currentStage.id} — Full ${rowName} row practice`;
+    const practiceName = currentStage.id >= 32
+      ? "shift practice"
+      : `${currentStage.id >= 22 ? "bottom" : currentStage.id >= 15 ? "top" : "home"} row practice`;
+    stageDisplay.textContent = `Stage ${currentStage.id} — Full ${practiceName}`;
     return;
   }
 
@@ -438,6 +560,18 @@ function addCharacter(character) {
       topRowMasteryCorrectChars += 1;
     }
   }
+  if (currentStage.id === 24 && currentStage.isMasteryCheck && !isBottomRowMastered) {
+    bottomRowMasteryTotalAttempts += 1;
+    if (character === expectedCharacter) {
+      bottomRowMasteryCorrectChars += 1;
+    }
+  }
+  if (currentStage.id === 33 && currentStage.isMasteryCheck && !isShiftPracticeMastered) {
+    shiftPracticeMasteryTotalAttempts += 1;
+    if (character === expectedCharacter) {
+      shiftPracticeMasteryCorrectChars += 1;
+    }
+  }
 
   typedText += character;
   renderTypingState();
@@ -476,6 +610,8 @@ function completeCurrentWord() {
   const currentStage = LESSON_STAGES[currentStageIndex];
   let masteryCompletionMessage = "";
   let homeRowMasteryCompleted = false;
+  let topRowMasteryCompleted = false;
+  let bottomRowMasteryCompleted = false;
   if (currentStage.id === 8 && currentStage.isMasteryCheck && wordsCompletedInStage >= MASTERY_WORDS_TO_COMPLETE) {
     const masteryAccuracy = Math.round((masteryCorrectChars / masteryTotalAttempts) * 100);
     masteryCompletionMessage = `Home row complete! Accuracy: ${masteryAccuracy}%`;
@@ -483,14 +619,32 @@ function completeCurrentWord() {
     homeRowMasteryCompleted = true;
   }
 
-  if (currentStage.id === 16 && currentStage.isMasteryCheck && !isTopRowMastered && wordsCompletedInStage >= MASTERY_WORDS_TO_COMPLETE) {
-    const masteryAccuracy = Math.round((topRowMasteryCorrectChars / topRowMasteryTotalAttempts) * 100);
-    masteryCompletionMessage = `Top row complete! Accuracy: ${masteryAccuracy}%`;
-    isTopRowMastered = true;
+  if (currentStage.id === 16 && currentStage.isMasteryCheck && wordsCompletedInStage >= MASTERY_WORDS_TO_COMPLETE) {
+    if (!isTopRowMastered) {
+      const masteryAccuracy = Math.round((topRowMasteryCorrectChars / topRowMasteryTotalAttempts) * 100);
+      masteryCompletionMessage = `Top row complete! Accuracy: ${masteryAccuracy}%`;
+      isTopRowMastered = true;
+    }
+    topRowMasteryCompleted = true;
+  }
+
+  if (currentStage.id === 24 && currentStage.isMasteryCheck && wordsCompletedInStage >= MASTERY_WORDS_TO_COMPLETE) {
+    if (!isBottomRowMastered) {
+      const masteryAccuracy = Math.round((bottomRowMasteryCorrectChars / bottomRowMasteryTotalAttempts) * 100);
+      masteryCompletionMessage = `Bottom row complete! Accuracy: ${masteryAccuracy}%`;
+      isBottomRowMastered = true;
+    }
+    bottomRowMasteryCompleted = true;
+  }
+
+  if (currentStage.id === 33 && currentStage.isMasteryCheck && !isShiftPracticeMastered && wordsCompletedInStage >= MASTERY_WORDS_TO_COMPLETE) {
+    const masteryAccuracy = Math.round((shiftPracticeMasteryCorrectChars / shiftPracticeMasteryTotalAttempts) * 100);
+    masteryCompletionMessage = `Shift practice complete! Accuracy: ${masteryAccuracy}%`;
+    isShiftPracticeMastered = true;
   }
 
   const hasNextStage = currentStageIndex < LESSON_STAGES.length - 1;
-  const stageAdvanced = homeRowMasteryCompleted || (
+  const stageAdvanced = homeRowMasteryCompleted || topRowMasteryCompleted || bottomRowMasteryCompleted || (
     !currentStage.isMasteryCheck && wordsCompletedInStage >= WORDS_PER_STAGE && hasNextStage
   );
   if (stageAdvanced) {
@@ -742,6 +896,3 @@ createBackspaceKey();
 setKeyboardShiftState(false);
 addKeyListeners();
 renderTypingState();
-if (isHomeRowMastered) {
-  completionMessage.textContent = "Home row complete!";
-}
