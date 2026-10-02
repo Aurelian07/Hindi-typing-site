@@ -34,7 +34,7 @@
             <p class="home-eyebrow">YOUR LEARNING PATH</p>
             <h2 id="roadmap-title">Practice tracks</h2>
           </div>
-          <span class="home-roadmap-count">01 / 04</span>
+          <span class="home-roadmap-count">01 / 05</span>
         </div>
 
         <ol class="home-roadmap">
@@ -64,8 +64,16 @@
             </span>
             <span class="home-track__badge" id="bottomRowBadge">Coming soon</span>
           </li>
-          <li class="home-track home-track--disabled" aria-disabled="true">
+          <li class="home-track home-track--disabled" id="shiftPracticeTrack" aria-disabled="true">
             <span class="home-track__number">04</span>
+            <span class="home-track__copy">
+              <span class="home-track__title">Shift Practice</span>
+              <span class="home-track__detail">9 guided stages</span>
+            </span>
+            <span class="home-track__badge" id="shiftPracticeBadge">Coming soon</span>
+          </li>
+          <li class="home-track home-track--disabled" aria-disabled="true">
+            <span class="home-track__number">05</span>
             <span class="home-track__copy">
               <span class="home-track__title">Sentences &amp; Words</span>
               <span class="home-track__detail">Build fluency with real text</span>
@@ -87,12 +95,15 @@
       const HOME_ROW_STAGE_RANGE = { start: 0, end: 7 };
       const TOP_ROW_STAGE_RANGE = { start: 8, end: 15 };
       const BOTTOM_ROW_STAGE_RANGE = { start: 16, end: 23 };
+      const SHIFT_PRACTICE_STAGE_RANGE = { start: 24, end: 32 };
       const homeCtaLabel = document.getElementById("homeCtaLabel");
       const homeRowBadge = document.getElementById("homeRowBadge");
       const topRowTrack = document.getElementById("topRowTrack");
       const topRowBadge = document.getElementById("topRowBadge");
       const bottomRowTrack = document.getElementById("bottomRowTrack");
       const bottomRowBadge = document.getElementById("bottomRowBadge");
+      const shiftPracticeTrack = document.getElementById("shiftPracticeTrack");
+      const shiftPracticeBadge = document.getElementById("shiftPracticeBadge");
       let progress = null;
 
       try {
@@ -110,20 +121,29 @@
       const currentStageIndex = progress?.currentStageIndex;
       const hasValidStageIndex = Number.isInteger(currentStageIndex)
         && currentStageIndex >= HOME_ROW_STAGE_RANGE.start
-        && currentStageIndex <= BOTTOM_ROW_STAGE_RANGE.end;
+        && currentStageIndex <= SHIFT_PRACTICE_STAGE_RANGE.end;
       const isHomeRowStage = hasValidStageIndex
         && currentStageIndex <= HOME_ROW_STAGE_RANGE.end;
       const isTopRowStage = hasValidStageIndex
         && currentStageIndex >= TOP_ROW_STAGE_RANGE.start
         && currentStageIndex <= TOP_ROW_STAGE_RANGE.end;
       const isBottomRowStage = hasValidStageIndex
-        && currentStageIndex >= BOTTOM_ROW_STAGE_RANGE.start;
+        && currentStageIndex >= BOTTOM_ROW_STAGE_RANGE.start
+        && currentStageIndex <= BOTTOM_ROW_STAGE_RANGE.end;
+      const isShiftPracticeStage = hasValidStageIndex
+        && currentStageIndex >= SHIFT_PRACTICE_STAGE_RANGE.start
+        && currentStageIndex <= SHIFT_PRACTICE_STAGE_RANGE.end;
       const isHomeRowMastered = progress?.isHomeRowMastered === true;
       const isTopRowMastered = progress?.isTopRowMastered === true;
       const isBottomRowMastered = progress?.isBottomRowMastered === true;
-      const isFullKeyboardMastered = isHomeRowMastered && isTopRowMastered && isBottomRowMastered;
+      const isShiftPracticeMastered = progress?.isShiftPracticeMastered === true;
+      const isFullKeyboardMastered = isHomeRowMastered
+        && isTopRowMastered
+        && isBottomRowMastered
+        && isShiftPracticeMastered;
       const isTopRowLocked = !isTopRowMastered && !isTopRowStage;
       const isBottomRowLocked = !isBottomRowMastered && !isBottomRowStage;
+      const isShiftPracticeLocked = !isShiftPracticeMastered && !isShiftPracticeStage;
 
       function resetProgressForTrack(firstStageIndex) {
         const progressToSave = progress && typeof progress === "object" && !Array.isArray(progress)
@@ -137,6 +157,7 @@
         progressToSave.isHomeRowMastered = progressToSave.isHomeRowMastered === true;
         progressToSave.isTopRowMastered = progressToSave.isTopRowMastered === true;
         progressToSave.isBottomRowMastered = progressToSave.isBottomRowMastered === true;
+        progressToSave.isShiftPracticeMastered = progressToSave.isShiftPracticeMastered === true;
         localStorage.setItem("hindiTutorProgress", JSON.stringify(progressToSave));
       }
 
@@ -151,6 +172,10 @@
 
       if (isFullKeyboardMastered) {
         homeCtaLabel.textContent = "Full Keyboard Mastered — Practice Again";
+      } else if (isShiftPracticeMastered) {
+        homeCtaLabel.textContent = "Shift Practice Mastered — Practice Again";
+      } else if (isShiftPracticeStage) {
+        homeCtaLabel.textContent = `Continue — Shift Practice Stage ${currentStageIndex - SHIFT_PRACTICE_STAGE_RANGE.start + 1}`;
       } else if (isBottomRowMastered) {
         homeCtaLabel.textContent = "Bottom Row Mastered — Practice Again";
       } else if (isBottomRowStage) {
@@ -220,6 +245,31 @@
         bottomRowTrack.classList.remove("home-track--disabled");
         bottomRowTrack.classList.add("home-track--active");
         bottomRowTrack.removeAttribute("aria-disabled");
+      }
+
+      if (isShiftPracticeMastered) {
+        shiftPracticeBadge.textContent = "✓ Completed";
+        shiftPracticeBadge.classList.add("home-track__badge--complete");
+      } else if (isShiftPracticeStage) {
+        shiftPracticeBadge.textContent = "In progress";
+      } else {
+        shiftPracticeBadge.textContent = "🔒 Locked";
+      }
+
+      if (isShiftPracticeMastered || isShiftPracticeStage || isShiftPracticeLocked) {
+        const shiftPracticeLink = document.createElement("a");
+        shiftPracticeLink.className = "home-track__link";
+        shiftPracticeLink.href = "lessons.html";
+        if (isShiftPracticeLocked) {
+          shiftPracticeLink.addEventListener("click", (event) => {
+            confirmTrackSkip(event, "Shift Practice", "Bottom Row", SHIFT_PRACTICE_STAGE_RANGE.start);
+          });
+        }
+        Array.from(shiftPracticeTrack.children).forEach((child) => shiftPracticeLink.appendChild(child));
+        shiftPracticeTrack.appendChild(shiftPracticeLink);
+        shiftPracticeTrack.classList.remove("home-track--disabled");
+        shiftPracticeTrack.classList.add("home-track--active");
+        shiftPracticeTrack.removeAttribute("aria-disabled");
       }
     })();
   </script>
