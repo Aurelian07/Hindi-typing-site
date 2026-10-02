@@ -65,5 +65,259 @@
   </div>
 
   <script src="script.js"></script>
+  <script>
+    (() => {
+      const progressStorageKey = "hindiTutorProgress";
+      let savedProgress = {};
+      let sentenceExercises = [];
+      let sentencePracticeIndex = 0;
+      let sentencePracticeMastered = false;
+      let sentenceTypedText = "";
+      let sentencePromptStartTime = null;
+      let sentenceIsTransitioning = false;
+      let sentenceCorrectChars = 0;
+      let sentenceTotalMistakes = 0;
+      let sentenceTotalCpm = 0;
+      let sentenceCompletedWords = 0;
+
+      try {
+        const serializedProgress = localStorage.getItem(progressStorageKey);
+        if (serializedProgress) {
+          const parsedProgress = JSON.parse(serializedProgress);
+          if (parsedProgress && typeof parsedProgress === "object" && !Array.isArray(parsedProgress)) {
+            savedProgress = parsedProgress;
+          }
+        }
+      } catch {
+        savedProgress = {};
+      }
+
+      if (savedProgress.activePracticeMode !== "sentences") {
+        return;
+      }
+
+      const promptDisplay = document.getElementById("promptDisplay");
+      const userInputDisplay = document.getElementById("userInputDisplay");
+      const wordsCompletedDisplay = document.getElementById("wordsCompletedDisplay");
+      const statsDisplay = document.getElementById("statsDisplay");
+      const stageDisplay = statsDisplay?.firstElementChild;
+      const completionMessage = document.getElementById("completionMessage");
+      const lastCpmDisplay = statsDisplay?.children[4];
+      const averageCpmDisplay = statsDisplay?.children[5];
+      const accuracyDisplay = statsDisplay?.children[6];
+
+      function showSentenceError(message) {
+        if (completionMessage) {
+          completionMessage.textContent = message;
+        }
+      }
+
+      function saveSentenceProgress() {
+        const progressToSave = {
+          ...savedProgress,
+          activePracticeMode: "sentences",
+          sentencePracticeIndex,
+          isSentencePracticeMastered: sentencePracticeMastered,
+          wordsCompleted: sentenceCompletedWords
+        };
+        localStorage.setItem(progressStorageKey, JSON.stringify(progressToSave));
+        savedProgress = progressToSave;
+      }
+
+      function updateSentenceStats() {
+        const exercise = sentenceExercises[sentencePracticeIndex];
+        if (!exercise) {
+          return;
+        }
+
+        stageDisplay.textContent = `Lesson: ${exercise.lessonTitle} — Exercise ${sentencePracticeIndex + 1} of ${sentenceExercises.length}`;
+        wordsCompletedDisplay.textContent = `Words completed: ${sentenceCompletedWords}`;
+        lastCpmDisplay.textContent = `Last word: ${lastCpmDisplay.dataset.value || 0} CPM`;
+        averageCpmDisplay.textContent = `Average: ${sentenceCompletedWords
+          ? Math.round(sentenceTotalCpm / sentenceCompletedWords)
+          : 0} CPM`;
+        const totalAttempts = sentenceCorrectChars + sentenceTotalMistakes;
+        const accuracy = totalAttempts === 0
+          ? 100
+          : Math.round((sentenceCorrectChars / totalAttempts) * 100);
+        accuracyDisplay.textContent = `Accuracy: ${accuracy}%`;
+      }
+
+      function renderSentenceState() {
+        currentPrompt = sentenceExercises[sentencePracticeIndex].text;
+        typedText = sentenceTypedText;
+        renderPrompt();
+        renderTypingState();
+        updateSentenceStats();
+      }
+
+      function completeSentenceExercise() {
+        if (sentenceIsTransitioning) {
+          return;
+        }
+
+        sentenceIsTransitioning = true;
+        const elapsedSeconds = Math.max((Date.now() - sentencePromptStartTime) / 1000, 0.001);
+        const currentCpm = Math.round((currentPrompt.length / elapsedSeconds) * 60);
+        sentenceCompletedWords += 1;
+        sentenceTotalCpm += currentCpm;
+        lastCpmDisplay.dataset.value = currentCpm;
+
+        const isLastExercise = sentencePracticeIndex === sentenceExercises.length - 1;
+        if (isLastExercise) {
+          sentencePracticeMastered = true;
+          sentencePracticeIndex = 0;
+          completionMessage.textContent = "All sentence exercises complete!";
+        } else {
+          sentencePracticeIndex += 1;
+          completionMessage.textContent = "Completed!";
+        }
+
+        saveSentenceProgress();
+        updateSentenceStats();
+
+        setTimeout(() => {
+          sentenceTypedText = "";
+          sentencePromptStartTime = null;
+          renderSentenceState();
+          sentenceIsTransitioning = false;
+        }, 800);
+      }
+
+      function addSentenceCharacter(character) {
+        if (sentenceIsTransitioning) {
+          return;
+        }
+
+        if (sentenceTypedText.length === 0 && sentencePromptStartTime === null) {
+          sentencePromptStartTime = Date.now();
+        }
+
+        const expectedCharacter = currentPrompt[sentenceTypedText.length];
+        if (character === expectedCharacter) {
+          sentenceCorrectChars += 1;
+        } else {
+          sentenceTotalMistakes += 1;
+        }
+
+        sentenceTypedText += character;
+        renderSentenceState();
+        if (sentenceTypedText === currentPrompt) {
+          completeSentenceExercise();
+        }
+      }
+
+      function removeSentenceCharacter() {
+        if (sentenceIsTransitioning) {
+          return;
+        }
+
+        sentenceTypedText = sentenceTypedText.slice(0, -1);
+        renderSentenceState();
+      }
+
+      function handleSentenceClick(event) {
+        if (event.target.closest(".key-spacebar")) {
+          event.stopImmediatePropagation();
+          addSentenceCharacter(" ");
+          return;
+        }
+
+        const keyElement = event.target.closest(".inscript-key");
+        if (!keyElement) {
+          return;
+        }
+
+        event.stopImmediatePropagation();
+        const keyMapping = INSCRIPT_LAYOUT[keyElement.dataset.code];
+        const character = event.shiftKey || keyElement.classList.contains("shift-active")
+          ? keyMapping.shifted
+          : keyMapping.unshifted;
+        if (character !== null) {
+          addSentenceCharacter(character);
+        }
+      }
+
+      function handleSentenceKeydown(event) {
+        if (event.ctrlKey || event.altKey || event.metaKey) {
+          return;
+        }
+
+        if (event.key === " ") {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          addSentenceCharacter(" ");
+          return;
+        }
+
+        if (event.key === "Backspace") {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          removeSentenceCharacter();
+          return;
+        }
+
+        const keyMapping = INSCRIPT_LAYOUT[event.code];
+        if (!keyMapping) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const character = event.shiftKey ? keyMapping.shifted : keyMapping.unshifted;
+        if (character !== null) {
+          addSentenceCharacter(character);
+        }
+      }
+
+      document.addEventListener("click", handleSentenceClick, true);
+      document.addEventListener("keydown", handleSentenceKeydown, true);
+
+      fetch("/content/lessons.json")
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`Lesson content request failed with status ${response.status}.`);
+          }
+          return response.json();
+        })
+        .then((content) => {
+          if (!content || !Array.isArray(content.lessons)) {
+            throw new Error("Lesson content has an invalid format.");
+          }
+
+          sentenceExercises = content.lessons.flatMap((lesson) => (
+            Array.isArray(lesson.levels)
+              ? lesson.levels.flatMap((level) => (
+                Array.isArray(level.exercises)
+                  ? level.exercises.map((exercise) => ({
+                    ...exercise,
+                    lessonTitle: lesson.title
+                  }))
+                  : []
+              ))
+              : []
+          ));
+
+          if (sentenceExercises.length === 0) {
+            throw new Error("No sentence exercises are available.");
+          }
+
+          sentencePracticeIndex = Number.isInteger(savedProgress.sentencePracticeIndex)
+            && savedProgress.sentencePracticeIndex >= 0
+            && savedProgress.sentencePracticeIndex < sentenceExercises.length
+            ? savedProgress.sentencePracticeIndex
+            : 0;
+          sentencePracticeMastered = savedProgress.isSentencePracticeMastered === true;
+          sentenceCompletedWords = Number.isInteger(savedProgress.wordsCompleted)
+            && savedProgress.wordsCompleted >= 0
+            ? savedProgress.wordsCompleted
+            : 0;
+          renderSentenceState();
+        })
+        .catch((error) => {
+          showSentenceError(`Unable to load sentence practice: ${error.message}`);
+        });
+    })();
+  </script>
 </body>
 </html>

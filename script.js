@@ -459,6 +459,9 @@ function renderPrompt() {
   Array.from(currentPrompt).forEach((character) => {
     const characterSpan = document.createElement("span");
     characterSpan.textContent = character;
+    if (character === " ") {
+      characterSpan.classList.add("space-character");
+    }
     if (isPromptReplacement) {
       characterSpan.classList.add("prompt-entering");
     }

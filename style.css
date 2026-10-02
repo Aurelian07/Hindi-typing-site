@@ -52,6 +52,23 @@ body {
   color: #999;
 }
 
+.prompt-display span.space-character {
+  display: inline;
+  white-space: pre;
+}
+
+.prompt-display span.space-character.pending {
+  background-color: rgba(153, 153, 153, 0.15);
+}
+
+.prompt-display span.space-character.correct {
+  background-color: rgba(121, 201, 138, 0.35);
+}
+
+.prompt-display span.space-character.incorrect {
+  background-color: rgba(237, 119, 119, 0.35);
+}
+
 .prompt-display span.current-character {
   border-bottom: 3px solid #f0c674;
 }

@@ -73,13 +73,13 @@
             </span>
             <span class="home-track__badge" id="shiftPracticeBadge">Coming soon</span>
           </li>
-          <li class="home-track home-track--disabled" aria-disabled="true">
+          <li class="home-track home-track--disabled" id="sentencesTrack" aria-disabled="true">
             <span class="home-track__number">05</span>
             <span class="home-track__copy">
               <span class="home-track__title">Sentences &amp; Words</span>
               <span class="home-track__detail">Build fluency with real text</span>
             </span>
-            <span class="home-track__badge">Coming soon</span>
+            <span class="home-track__badge" id="sentencesBadge">Coming soon</span>
           </li>
         </ol>
       </section>
@@ -105,6 +105,8 @@
       const bottomRowBadge = document.getElementById("bottomRowBadge");
       const shiftPracticeTrack = document.getElementById("shiftPracticeTrack");
       const shiftPracticeBadge = document.getElementById("shiftPracticeBadge");
+      const sentencesTrack = document.getElementById("sentencesTrack");
+      const sentencesBadge = document.getElementById("sentencesBadge");
       let progress = null;
 
       try {
@@ -138,10 +140,14 @@
       const isTopRowMastered = progress?.isTopRowMastered === true;
       const isBottomRowMastered = progress?.isBottomRowMastered === true;
       const isShiftPracticeMastered = progress?.isShiftPracticeMastered === true;
+      const isSentencePracticeMastered = progress?.isSentencePracticeMastered === true;
+      const isSentencePracticeActive = progress?.activePracticeMode === "sentences";
+      const isSentencePracticeLocked = !isSentencePracticeMastered && !isSentencePracticeActive;
       const isFullKeyboardMastered = isHomeRowMastered
         && isTopRowMastered
         && isBottomRowMastered
-        && isShiftPracticeMastered;
+        && isShiftPracticeMastered
+        && isSentencePracticeMastered;
       const isTopRowLocked = !isTopRowMastered && !isTopRowStage;
       const isBottomRowLocked = !isBottomRowMastered && !isBottomRowStage;
       const isShiftPracticeLocked = !isShiftPracticeMastered && !isShiftPracticeStage;
@@ -171,8 +177,25 @@
         resetProgressForTrack(firstStageIndex);
       }
 
+      function confirmSentencePracticeSkip(event) {
+        if (!window.confirm("Skip ahead to Sentences & Words? You haven't completed Shift Practice yet.")) {
+          event.preventDefault();
+          return;
+        }
+
+        const progressToSave = progress && typeof progress === "object" && !Array.isArray(progress)
+          ? { ...progress }
+          : {};
+        progressToSave.activePracticeMode = "sentences";
+        localStorage.setItem("hindiTutorProgress", JSON.stringify(progressToSave));
+      }
+
       if (isFullKeyboardMastered) {
-        homeCtaLabel.textContent = "Full Keyboard Mastered — Practice Again";
+        homeCtaLabel.textContent = "Full Keyboard & Sentences Mastered — Practice Again";
+      } else if (isSentencePracticeMastered) {
+        homeCtaLabel.textContent = "Sentence Practice Mastered — Practice Again";
+      } else if (isSentencePracticeActive) {
+        homeCtaLabel.textContent = "Continue — Sentence Practice";
       } else if (isShiftPracticeMastered) {
         homeCtaLabel.textContent = "Shift Practice Mastered — Practice Again";
       } else if (isShiftPracticeStage) {
@@ -271,6 +294,29 @@
         shiftPracticeTrack.classList.remove("home-track--disabled");
         shiftPracticeTrack.classList.add("home-track--active");
         shiftPracticeTrack.removeAttribute("aria-disabled");
+      }
+
+      if (isSentencePracticeMastered) {
+        sentencesBadge.textContent = "✓ Completed";
+        sentencesBadge.classList.add("home-track__badge--complete");
+      } else if (isSentencePracticeActive) {
+        sentencesBadge.textContent = "In progress";
+      } else {
+        sentencesBadge.textContent = "🔒 Locked";
+      }
+
+      if (isSentencePracticeMastered || isSentencePracticeActive || isSentencePracticeLocked) {
+        const sentencesLink = document.createElement("a");
+        sentencesLink.className = "home-track__link";
+        sentencesLink.href = "lessons.html";
+        if (!isSentencePracticeMastered && !isSentencePracticeActive) {
+          sentencesLink.addEventListener("click", confirmSentencePracticeSkip);
+        }
+        Array.from(sentencesTrack.children).forEach((child) => sentencesLink.appendChild(child));
+        sentencesTrack.appendChild(sentencesLink);
+        sentencesTrack.classList.remove("home-track--disabled");
+        sentencesTrack.classList.add("home-track--active");
+        sentencesTrack.removeAttribute("aria-disabled");
       }
     })();
   </script>

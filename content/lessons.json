@@ -2,30 +2,45 @@
   "lessons": [
     {
       "id": "lesson-1",
-      "title": "मूल शब्द और वाक्य",
+      "title": "Basic Words",
       "levels": [
         {
           "id": "level-1",
           "difficulty": "beginner",
           "exercises": [
-            {
-              "id": "ex-1",
-              "layout_type": "inscript",
-              "text": "कमल",
-              "target_wpm": 15
-            },
-            {
-              "id": "ex-2",
-              "layout_type": "inscript",
-              "text": "नमस्ते",
-              "target_wpm": 15
-            },
-            {
-              "id": "ex-3",
-              "layout_type": "inscript",
-              "text": "राम घर जाता है।",
-              "target_wpm": 15
-            }
+            { "id": "ex-1", "layout_type": "inscript", "text": "कमल", "target_wpm": 10 },
+            { "id": "ex-2", "layout_type": "inscript", "text": "पानी", "target_wpm": 10 },
+            { "id": "ex-3", "layout_type": "inscript", "text": "नमस्ते", "target_wpm": 10 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lesson-2",
+      "title": "Short Phrases",
+      "levels": [
+        {
+          "id": "level-1",
+          "difficulty": "intermediate",
+          "exercises": [
+            { "id": "ex-1", "layout_type": "inscript", "text": "यह घर है।", "target_wpm": 15 },
+            { "id": "ex-2", "layout_type": "inscript", "text": "वह बड़ा है।", "target_wpm": 15 },
+            { "id": "ex-3", "layout_type": "inscript", "text": "मुझे पानी चाहिए।", "target_wpm": 15 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lesson-3",
+      "title": "Full Sentences",
+      "levels": [
+        {
+          "id": "level-1",
+          "difficulty": "advanced",
+          "exercises": [
+            { "id": "ex-1", "layout_type": "inscript", "text": "राम घर जाता है।", "target_wpm": 20 },
+            { "id": "ex-2", "layout_type": "inscript", "text": "सूरज पूरब से निकलता है।", "target_wpm": 20 },
+            { "id": "ex-3", "layout_type": "inscript", "text": "भारत एक महान देश है।", "target_wpm": 20 }
           ]
         }
       ]
